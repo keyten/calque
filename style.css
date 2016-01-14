@@ -102,3 +102,17 @@ body {
     content: attr(data-result);
     color: grey;
 }
+
+.power {
+    position: relative;
+    font-size: 9pt;
+    top: -5px;
+    font-style: normal;
+}
+
+.subpower {
+    position: relative;
+    font-size: 9pt;
+    top: 5px;
+    font-style: normal;
+}
