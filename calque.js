@@ -49,6 +49,18 @@
 			event.preventDefault();
 			event.dataTransfer.dropEffect = 'copy';
 		}, false);
+
+		// loading the last file
+		try {
+			var val = window.localStorage.getItem('text');
+			if(val.replace(/\s/g, ''))
+				inputEl.value = val;
+		} catch(e){}
+		window.onunload = function(){
+			try {
+				window.localStorage.setItem('text', inputEl.value);
+			} catch(e){}
+		}
 	}
 
 	Calque.prototype.updateActiveLine = function () {
