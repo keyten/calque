@@ -140,11 +140,13 @@
 
 		_.remove(this.expressions, { line: null });
 
+		this.fixMultiline();
 		this.repaint();
 	};
 
 	Calque.prototype.repaint = function () {
-		var html = '';
+		var html = '',
+			multiline = null;
 
 		this.lines.forEach(function (line, index) {
 			var expression = this.expressions.filter(function (expression) {
@@ -157,9 +159,11 @@
 				} else {
 					var type = 'error';
 				}
+			} else if (multiline) {
+				var type = 'break';
 			} else if (expression.result === undefined) {
 				var type = 'empty';
-			} else {
+			}  else {
 				var type = 'result';
 			}
 
@@ -175,6 +179,9 @@
 			}
 			if (type === 'error') prefix += '// ';
 
+			if(!(multiline--))
+				multiline = null;
+
 			var data = '';
 			if (type === 'result') {
 				if (expression.result === null) {
@@ -182,6 +189,9 @@
 				} else if (expression.result instanceof Function) {
 					var source = expression.result.toString();
 					data = '';
+				} else if (Object.prototype.toString.call(expression.result) == '[object String]' && expression.result.indexOf('\n') > -1) {
+					data = expression.result.toString().replace(/\n/g, '\n' + Array(expression.code.length + 4).join(' '));
+					multiline = expression.result.toString().match(/\n/g).length;
 				} else {
 					data = expression.result.toString();
 				}
@@ -279,6 +289,27 @@
 				document.getElementById('stylelink').href = 'style/' + curr.style + '.css';
 		}
 	});
+
+	Calque.prototype.fixMultiline = function(){
+		var multiline = null;
+		this.lines.forEach(function (line, index) {
+			var expression = this.expressions.filter(function (expression) {
+				return expression.line === index;
+			})[0];
+
+			if(!(multiline--))
+				multiline = null;
+
+			//if(multiline != null && expression.code != ''){
+			//	this.lines.splice(index, 0, '\n');
+			//}
+
+			if(Object.prototype.toString.call(expression.result) == '[object String]' && expression.result.indexOf('\n') > -1)
+				multiline = expression.result.toString().match(/\n/g).length;
+
+		}.bind(this));
+		this.inputEl.value = this.lines.join('\n');
+	};
 
 	function Expression(code, scope, comment) {
 		this.code = code;
