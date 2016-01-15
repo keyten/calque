@@ -21,6 +21,7 @@
 		this.lines = [];
 		this.expressions = [];
 		this.activeLine = 0;
+		this.config = {};
 
 		var handler = function () {
 			this.updateActiveLine();
@@ -82,7 +83,7 @@
 	}
 
 	Calque.prototype.input = function () {
-		var raw = this.inputEl.value;
+		var raw = this.preprocess(this.inputEl.value);
 		if (raw !== this.raw) {
 			this.raw = raw;
 			this.lines = this.raw.split("\n");
@@ -214,6 +215,19 @@
 		};
 		reader.readAsText(file);
 	};
+
+	Calque.prototype.preprocess = function(raw){
+		var change = false;
+		raw.replace(/#(number|precision|epsilon)\s*([a-z0-9\.]+)\n?/gi, function(_, key, value){
+			if(this.config[key] != value){
+				this.config[key] = value;
+				change = true;
+			}
+		}.bind(this));
+		if(change)
+			math.config(this.config);
+		return raw;
+	}
 
 	function Expression(code, scope, comment) {
 		this.code = code;

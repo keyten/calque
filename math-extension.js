@@ -57,7 +57,7 @@ math.import({
 			delta = 0.1;
 
 		if(delta == 0)
-			throw new Error("0 is wrong step for integral!");
+			throw "0 is wrong step for integral!";
 
 		if(b < a)
 			return -math.int(fn, b, a, delta);
@@ -235,6 +235,18 @@ math.class('Polynom', {
 		}
 
 		return str.join(' + ').replace(/\s\+\s\-/g, ' - ');
+	}
+});
+
+math.import({
+	name: 'typeof',
+	factory: function(type, config, load, typed){
+		return typed('typeof', {
+			'Polynom': function(a){
+				console.log(3);
+				return 'Polynom';
+			}
+		});
 	}
 });
 /*
