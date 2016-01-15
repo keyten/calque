@@ -208,7 +208,7 @@
 		var reader = new FileReader();
 		reader.onload = function(e){
 			if(input.value.replace(/\s/g, '') !== ''){
-				if(!window.confirm("Are you sure? You\'ll lost your current text."))
+				if(!window.confirm("Are you sure? You\'ll lose your current text."))
 					return;
 			}
 			input.value = e.target.result;

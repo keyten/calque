@@ -184,20 +184,28 @@ math.import({
 
 // Numbers
 math.import({
-	calcPi: function(n){
-		// Ramanujan's formula
-		if(n == null)
-			n = 1;
-		var sum = 0;
-		for(var k = 0; k < n; k++){
-			sum += (math.factorial(4*k) * (1103 + 26390 * k))/(Math.pow(math.factorial(k), 4) * Math.pow(396, 4*k));
-		}
-		return 1 / (((2 * Math.sqrt(2))/9801) * sum);
-	},
+	calc: function(num, n){
+		switch(num){
 
-	calcE: function(n){
-		if(n == null)
-			n = 5;
+			case 'pi': {
+				// Ramanujan's formula
+				if(n == null)
+					n = 1;
+				var sum = 0;
+				for(var k = 0; k < n; k++){
+					sum += (math.factorial(4*k) * (1103 + 26390 * k))/(Math.pow(math.factorial(k), 4) * Math.pow(396, 4*k));
+				}
+				return 1 / (((2 * Math.sqrt(2))/9801) * sum);
+			} break;
+
+			case 'e': {
+				if(n == null)
+					n = 5;
+			} break;
+
+			default:
+				throw "Unknown constant type";
+		}
 	}
 });
 
@@ -315,12 +323,6 @@ math.class('Polynom', {
 
 		return str.join(' + ').replace(/\s\+\s\-/g, ' - ');
 	}
-});
-
-math.import({
-	meow: math.typed('meow', {
-		'Polynom': () => 'me'
-	})
 });
 
 
