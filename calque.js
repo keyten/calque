@@ -217,17 +217,66 @@
 	};
 
 	Calque.prototype.preprocess = function(raw){
-		var change = false;
-		raw.replace(/#(number|precision|epsilon)\s*([a-z0-9\.]+)\n?/gi, function(_, key, value){
-			if(this.config[key] != value){
-				this.config[key] = value;
+		var match,
+			change = false;;
+		if(match = raw.match(/#number\s+([a-z]+)/i)){
+			match = match[1];
+			if(match != this.config.number && (match == 'number' || match == 'bignumber' || match == 'fraction')){
+				this.config.number = match;
 				change = true;
 			}
-		}.bind(this));
+		}
+		else if(this.config.number != 'number'){
+			this.config.number = 'number';
+			change = true;
+		}
+
+		if(match = raw.match(/#precision\s+([0-9]+)/i)){
+			match = match[1];
+			if(match != this.config.precision && +match == match){
+				this.config.precision = match;
+				change = true;
+			}
+		}
+		else if(this.config.precision != 64){
+			this.config.precision = 64;
+			change = true;
+		}
+
+		if(match = raw.match(/#style\s+([a-z]+)/i)){
+			match = match[1].toLowerCase();
+			if(match != this.config.style && (match == 'monokai' || match == 'default')){
+				this.config.style = match;
+				change = true;
+			}
+		}
+
+		if(match = raw.match(/#epsilon\s+([0-9-.e]+)/i)){
+			match = match[1];
+			if(match != this.config.epsilon && +match == match){
+				this.config.epsilon = match;
+				change = true;
+			}
+		}
+		else if(this.config.epsilon != 1e-14){
+			this.config.epsilon = 1e-14;
+			change = true;
+		}
+
 		if(change)
 			math.config(this.config);
 		return raw;
 	}
+
+	// styles
+	math.on('config', function(curr, prev){
+		if(curr.style !== prev.style){
+			if(curr.style == 'default')
+				document.getElementById('stylelink').href = '';
+			else
+				document.getElementById('stylelink').href = 'style/' + curr.style + '.css';
+		}
+	});
 
 	function Expression(code, scope, comment) {
 		this.code = code;

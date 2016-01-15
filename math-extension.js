@@ -3,7 +3,7 @@ math.class = function(name, object){
 	math.import({
 		name: name,
 		path: 'type',
-		lazy: true,
+		lazy: false,
 		factory: function(type, config, load, typed){
 
 			var cls = function(){
@@ -26,9 +26,33 @@ math.class = function(name, object){
 	make[ name.toLowerCase() ] = function(){
 		return new math.type[name](arguments);
 	};
-	math.import(make)
+	math.import(make);
+
+	var fns = {};
+	if(object.import){
+		object.import.forEach(function(fn){
+			fns[fn] = object[fn];
+		});
+		math.extend(name, fns);
+	}
 };
 
+math.extend = function(name, object){
+	for(var fn in object){
+		if(!Object.hasOwnProperty.call(object, fn))
+			continue;
+		(function(fn, obj){
+			obj = {};
+			obj[name] = object[fn];
+			math.import({
+				name: fn,
+				factory: function(type, config, load, typed){
+					return typed(fn, obj);
+				}
+			});
+		})(fn, {});
+	}
+};
 
 // Sets
 math.class('Set', {
@@ -40,6 +64,19 @@ math.class('Set', {
 		return '{' + this.elements.join(', ') + '}';
 	}
 });
+
+
+// Matrices
+math.extend('Matrix', {
+	sym: function(matrix){
+		return math.multiply(1/2, math.add(matrix, math.transpose(matrix)));
+	},
+	alt: function(matrix){
+		return math.multiply(1/2, math.subtract(matrix, math.transpose(matrix)));
+	}
+});
+
+
 
 // Analysis
 math.import({
@@ -158,10 +195,6 @@ math.import({
 		return 1 / (((2 * Math.sqrt(2))/9801) * sum);
 	},
 
-// m_0 = a_0
-// m_1 = m_0 + 1/m_2
-// m_2 = m_0 + 1/(a_1 + 1/a_2)
-
 	calcE: function(n){
 		if(n == null)
 			n = 5;
@@ -193,11 +226,57 @@ math.import({
 
 // todo: add bignumber
 
+
 // Polynom
 math.class('Polynom', {
 	init: function(args){
 		this.c = args;
 	},
+
+	solve: function(arg, value){
+		if(value == null)
+			value = 0;
+
+		// constant
+		if(arg.c.length == 1)
+			return arg.c[0];
+
+		// linear
+		if(arg.c.length == 2)
+			return -arg.c[0] / arg.c[1];
+
+		// quadratic
+		if(arg.c.length == 3){
+			var a = arg.c[2],
+				b = arg.c[1],
+				c = arg.c[0],
+				D = b * b - 4 * a * c,
+				one = math.divide( math.add(-b, math.sqrt(D)) , 2 * a ),
+				two = math.divide( math.subtract(-b, math.sqrt(D)) , 2 * a );
+			return math.eval('[' + one + ', ' + two + ']'); //return one + '; ' + two;
+		}
+
+		// 4,2,0 => ax^4 + bx^2 + c => a,0,b,0,c
+		// 6,3,0 => ax^6 + bx^3 + c => a,0,0,b,0,0,c
+		// 8,4,0 => ax^8 + bx^4 + c => a,0,0,0,b,0,0,0,c
+		if(arg.c.length % 2 === 1){
+			// check
+			var i = arg.c.length - 1,
+				period;
+			while(i){
+				if(arg.c[i] != 0){
+					console.log(i);
+					period = arg.c.length - i;
+					break;
+				}
+				i--;
+			}
+		}
+
+		throw "Can\'t solve this polynom.";
+	},
+
+	import: ['solve'],
 
 	toString: function(){
 		var c = this.c,
@@ -239,17 +318,12 @@ math.class('Polynom', {
 });
 
 math.import({
-	name: 'typeof',
-	factory: function(type, config, load, typed){
-		return typed('typeof', {
-			'Polynom': function(a){
-				console.log(3);
-				return 'Polynom';
-			}
-		});
-	}
+	meow: math.typed('meow', {
+		'Polynom': () => 'me'
+	})
 });
-/*
+
+
 math.import({
 	name: 'add',
 	factory: function(type, config, load, typed){
@@ -317,49 +391,8 @@ math.import({
 	}
 }); */
 
-math.import({
-	solve: function(arg, value){
-		if(value == null)
-			value = 0;
-
-		if(arg.c.length == 1)
-			return arg.c[0];
-
-		if(arg.c.length == 2)
-			return -arg.c[0] / arg.c[1];
-
-		if(arg.c.length == 3){
-			var a = arg.c[2],
-				b = arg.c[1],
-				c = arg.c[0],
-				D = b * b - 4 * a * c,
-				one = math.divide( math.add(-b, math.sqrt(D)) , 2 * a ),
-				two = math.divide( math.subtract(-b, math.sqrt(D)) , 2 * a );
-			return math.eval('[' + one + ', ' + two + ']'); //return one + '; ' + two;
-		}
-
-		// 4,2,0 => ax^4 + bx^2 + c => a,0,b,0,c
-		// 6,3,0 => ax^6 + bx^3 + c => a,0,0,b,0,0,c
-		// 8,4,0 => ax^8 + bx^4 + c => a,0,0,0,b,0,0,0,c
-		if(arg.c.length % 2 === 1){
-			// check
-			var i = arg.c.length - 1,
-				period;
-			while(i){
-				if(arg.c[i] != 0){
-					console.log(i);
-					period = arg.c.length - i;
-					break;
-				}
-				i--;
-			}
-		}
-
-		throw "Can\'t solve this polynom.";
-	}
-});
-
 // Linear recurrent ranges
+/*
 math.import({
 	name: 'RecurrentRange',
 	path: 'type',

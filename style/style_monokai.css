@@ -1,0 +1,16 @@
+body {
+    background: rgb(39, 40, 34);
+    color: rgb(151, 170, 193);
+}
+
+a {
+    color: rgb(102, 217, 239);
+}
+
+a:visited {
+    color: rgb(174, 129, 255);
+}
+
+.interface .input {
+    color: white;
+}
