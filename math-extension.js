@@ -1,4 +1,45 @@
 // Math.js extension by Keyten
+math.class = function(name, object){
+	math.import({
+		name: name,
+		path: 'type',
+		lazy: true,
+		factory: function(type, config, load, typed){
+
+			var cls = function(){
+				return this.init.apply(this, arguments);
+			};
+			cls.prototype = object;
+
+			math.typed.addType({
+				name: name,
+				test: object.test || (function(x){
+					return x && x instanceof cls;
+				})
+			});
+
+			return cls;
+		}
+	});
+
+	var make = {};
+	make[ name.toLowerCase() ] = function(){
+		return new math.type[name](arguments);
+	};
+	math.import(make)
+};
+
+
+// Sets
+math.class('Set', {
+	init: function(args){
+		this.elements = Array.prototype.slice.call(args);
+	},
+
+	toString: function(){
+		return '{' + this.elements.join(', ') + '}';
+	}
+});
 
 // Analysis
 math.import({
@@ -30,47 +71,25 @@ math.import({
 });
 
 // Colors
-math.import({
-	color: function(){
-		return new math.type.Color(arguments);
+math.class('Color', {
+	init: function(args){
+		this.r = Math.round(Math.min(Math.max(args[0], 0), 255));
+		this.g = Math.round(Math.min(Math.max(args[1], 0), 255));
+		this.b = Math.round(Math.min(Math.max(args[2], 0), 255));
+
+		if(isNaN(this.r))
+			this.r = 0;
+		if(isNaN(this.g))
+			this.g = 0;
+		if(isNaN(this.b))
+			this.b = 0;
+	},
+
+	toString: function(){
+		return '(' + [this.r, this.g, this.b].join(', ') + ')';
 	}
 });
-
-math.import({
-	name: 'Color',
-	path: 'type',
-	factory: function(type, config, load, typed){
-		
-		function Color(args){
-			this.r = Math.round(Math.min(Math.max(args[0], 0), 255));
-			this.g = Math.round(Math.min(Math.max(args[1], 0), 255));
-			this.b = Math.round(Math.min(Math.max(args[2], 0), 255));
-
-			if(isNaN(this.r))
-				this.r = 0;
-			if(isNaN(this.g))
-				this.g = 0;
-			if(isNaN(this.b))
-				this.b = 0;
-		}
-
-		Color.prototype.toString = function(){
-			return '(' + [this.r, this.g, this.b].join(', ') + ')';
-		};
-
-		typed.addType({
-			name: 'Color',
-			test: function(x){
-				return x && x instanceof Color;
-			}
-		});
-
-		return Color;
-
-	},
-	lazy: false
-});
-
+/*
 math.import({
 	name: 'add',
 	factory: function(type, config, load, typed){
@@ -124,26 +143,28 @@ math.import({
 			}
 		});
 	}
-});
+}); */
 
 // Numbers
 math.import({
 	calcPi: function(n){
+		// Ramanujan's formula
 		if(n == null)
-			n = 2;
+			n = 1;
 		var sum = 0;
-		for(var i = 1; i < n; i++){
-			console.log(i, Math.pow(-1, i + 1) / (i * i));
-			sum += Math.pow(-1,n + 1) / (i * i);
+		for(var k = 0; k < n; k++){
+			sum += (math.factorial(4*k) * (1103 + 26390 * k))/(Math.pow(math.factorial(k), 4) * Math.pow(396, 4*k));
 		}
-		return Math.sqrt(-2 * sum);
-		// :C wrong
+		return 1 / (((2 * Math.sqrt(2))/9801) * sum);
 	},
+
+// m_0 = a_0
+// m_1 = m_0 + 1/m_2
+// m_2 = m_0 + 1/(a_1 + 1/a_2)
 
 	calcE: function(n){
 		if(n == null)
-			n = '10000000000000000000000000000';
-		return math.eval('n = bignumber(' + n + '); (1 + 1/n) ^ n').entries;
+			n = 5;
 	}
 });
 
@@ -173,67 +194,50 @@ math.import({
 // todo: add bignumber
 
 // Polynom
-math.import({
-	name: 'Polynom',
-	path: 'type',
-	factory: function(type, config, load, typed){
+math.class('Polynom', {
+	init: function(args){
+		this.c = args;
+	},
 
-		function Polynom(args){
-			this.c = args;
+	toString: function(){
+		var c = this.c,
+			str = [];
+
+		function cf(coef, power){
+			var xp = 'x<em class="power">' + power + '</em>';
+
+			if(coef == 0)
+				return '';
+
+			if(power == 0)
+				xp = '';
+			else if(coef == 1)
+				coef = '';
+			else if(coef == -1)
+				coef = '-';
+
+			if(power == 1)
+				xp = 'x';
+
+			return coef + xp; //str.push(coef + xp);
 		}
 
-		Polynom.prototype.toString = function(){
-			var c = this.c,
-				str = [];
-
-			function cf(coef, power){
-				var xp = 'x<em class="power">' + power + '</em>';
-
-				if(coef == 0)
-					return '';
-
-				if(power == 0)
-					xp = '';
-				else if(coef == 1)
-					coef = '';
-				else if(coef == -1)
-					coef = '-';
-
-				if(power == 1)
-					xp = 'x';
-
-				return coef + xp; //str.push(coef + xp);
+		for(var power = 0; power < c.length; power++){
+			var coef = c[power];
+			if(coef.im){
+				str.push( cf(coef.re, power) + ' + ' + cf(coef.im, power) + 'i' );
 			}
-
-			for(var power = 0; power < c.length; power++){
-				var coef = c[power];
-				if(coef.im){
-					str.push( cf(coef.re, power) + ' + ' + cf(coef.im, power) + 'i' );
-				}
-				else {
-					var s = cf(coef, power);
-					if(s)
-						str.push( s );
-				}
-
+			else {
+				var s = cf(coef, power);
+				if(s)
+					str.push( s );
 			}
+		}
 
-			return str.join(' + ').replace(/\s\+\s\-/g, ' - ');
-		};
-
-		typed.addType({
-			name: 'Polynom',
-			test: function(x){
-				return x && x instanceof Polynom;
-			}
-		});
-
-		return Polynom;
-
-	},
-	lazy: false
+		return str.join(' + ').replace(/\s\+\s\-/g, ' - ');
+	}
 });
-
+/*
 math.import({
 	name: 'add',
 	factory: function(type, config, load, typed){
@@ -292,14 +296,14 @@ math.import({
 	}
 });
 
-
+/*
 math.import({
 	polynom: function(arg){
 		if(arg._data)
 			return new math.type.Polynom(arg._data);
 		return new math.type.Polynom(arguments);
 	}
-});
+}); */
 
 math.import({
 	solve: function(arg, value){
@@ -399,7 +403,7 @@ math.import({
 		return new math.type.RecurrentRange(arguments);
 	}
 });
-
+/*
 math.import({
 	exec: function(range){ // doesntworks
 		var power = range.c.length;
@@ -413,5 +417,28 @@ math.import({
 			numbers.push(number);
 		}
 		return numbers.join(', ');
+	}
+}); */
+
+// Units
+math.import({
+	equalBase: function(a, b){
+		if(math.typeof(a) !== 'Unit')
+			throw "First argument is not an unit";
+		if(math.typeof(b) !== 'Unit')
+			throw "Second argument is not an unit";
+		return a.equalBase(b);
+	}
+});
+
+// Utilities
+math.import({
+	// storage
+	getData: function(key){
+		return window.localStorage.getItem('calque_' + key);
+	},
+	setData: function(key, value){
+		window.localStorage.setItem('calque_' + key, value);
+		return 'Success';
 	}
 });

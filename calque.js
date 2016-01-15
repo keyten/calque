@@ -35,7 +35,7 @@
 
 		inputEl.onkeydown = handler;
 		inputEl.onkeyup = handler;
-		setInterval(handler, 50);
+	//	setInterval(handler, 50);
 
 		outputEl.scrollTop = inputEl.scrollTop;
 		inputEl.onscroll = function () {
@@ -99,6 +99,8 @@
 			last: null
 		};
 
+		var inComment = false;
+
 		this.lines.forEach(function (code, index) {
 			var oldSimilarExpressions = this.expressions.filter(function (expression) {
 				if (expression.line !== null) return;
@@ -106,12 +108,22 @@
 				return true;
 			});
 
+			// multiline comments
+			if(code.indexOf('###') === 0){
+				inComment = !inComment;
+			}
+
 			if (oldSimilarExpressions.length) {
 				var expression = oldSimilarExpressions[0];
-				expression.eval(scope);
+				if(!inComment)
+					expression.eval(scope);
 			} else {
-				var expression = new Expression(code, scope);
+				var expression = new Expression(code, scope, inComment);
 				this.expressions.push(expression);
+			}
+
+			if(code !== '' && code.length - code.lastIndexOf('###') === 3){
+				inComment = !inComment;
 			}
 
 			scope = scopeClone(expression.scopeOutput);
@@ -203,8 +215,7 @@
 		reader.readAsText(file);
 	};
 
-
-	function Expression(code, scope) {
+	function Expression(code, scope, comment) {
 		this.code = code;
 		this.scopeInput = scopeClone(scope);
 		this.scopeOutput = scopeClone(this.scopeInput);
@@ -219,7 +230,8 @@
 				}
 			}.bind(this));
 
-			this.eval(scope);
+			if(!comment)
+				this.eval(scope);
 		} catch (e) {
 			this.result = null;
 			this.error = e;
