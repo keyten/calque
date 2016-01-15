@@ -5,6 +5,8 @@
 		_.each(scope, function (value, name) {
 			if (value instanceof Function) {
 				newScope[name] = value;
+			} else if(value !== null && value.clone) {
+				newScope[name] = value.clone();
 			} else {
 				newScope[name] = math.clone(value);
 			}

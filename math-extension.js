@@ -60,6 +60,10 @@ math.class('Set', {
 		this.elements = Array.prototype.slice.call(args);
 	},
 
+	clone: function(){
+		return new math.type.Set(this.elements);
+	},
+
 	toString: function(){
 		return '{' + this.elements.join(', ') + '}';
 	}
@@ -120,6 +124,10 @@ math.class('Color', {
 			this.g = 0;
 		if(isNaN(this.b))
 			this.b = 0;
+	},
+
+	clone: function(){
+		return new math.type.Color(this.r, this.g, this.b);
 	},
 
 	toString: function(){
@@ -239,6 +247,10 @@ math.import({
 math.class('Polynom', {
 	init: function(args){
 		this.c = args;
+	},
+
+	clone: function(){
+		return new math.type.Polynom(this.c);
 	},
 
 	solve: function(arg, value){
@@ -383,15 +395,6 @@ math.import({
 		});
 	}
 });
-
-/*
-math.import({
-	polynom: function(arg){
-		if(arg._data)
-			return new math.type.Polynom(arg._data);
-		return new math.type.Polynom(arguments);
-	}
-}); */
 
 // Linear recurrent ranges
 /*
