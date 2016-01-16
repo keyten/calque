@@ -134,7 +134,7 @@ math.class('Color', {
 		return '(' + [this.r, this.g, this.b].join(', ') + ')';
 	}
 });
-/*
+
 math.import({
 	name: 'add',
 	factory: function(type, config, load, typed){
@@ -188,7 +188,7 @@ math.import({
 			}
 		});
 	}
-}); */
+});
 
 // Numbers
 math.import({
@@ -263,16 +263,16 @@ math.class('Polynom', {
 
 		// linear
 		if(arg.c.length == 2)
-			return -arg.c[0] / arg.c[1];
+			return math.divide(math.multiply(arg.c[0], -1), arg.c[1]);
 
 		// quadratic
 		if(arg.c.length == 3){
 			var a = arg.c[2],
 				b = arg.c[1],
 				c = arg.c[0],
-				D = b * b - 4 * a * c,
-				one = math.divide( math.add(-b, math.sqrt(D)) , 2 * a ),
-				two = math.divide( math.subtract(-b, math.sqrt(D)) , 2 * a );
+				D = math.subtract(math.pow(b, 2), math.multiply(4, math.multiply(a, c))),
+				one = math.divide( math.add(math.multiply(b, -1), math.sqrt(D)) , math.multiply(2, a) ),
+				two = math.divide( math.subtract(math.multiply(b, -1), math.sqrt(D)) , math.multiply(2, a) );
 			return math.eval('[' + one + ', ' + two + ']'); //return one + '; ' + two;
 		}
 
