@@ -81,6 +81,16 @@ math.extend('Matrix', {
 });
 
 
+// Fraction
+math.extend('Fraction', {
+	sqrt: function(frac){
+		if(frac.s == -1){
+			throw "Complex fraction aren\'t supported.";
+		}
+		return math.fraction(math.sqrt(frac.n), math.sqrt(frac.d));
+	}
+})
+
 
 // Analysis
 math.import({
