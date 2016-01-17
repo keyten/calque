@@ -75,11 +75,56 @@ math.extend('Matrix', {
 	sym: function(matrix){
 		return math.multiply(1/2, math.add(matrix, math.transpose(matrix)));
 	},
+
 	alt: function(matrix){
 		return math.multiply(1/2, math.subtract(matrix, math.transpose(matrix)));
 	}
 });
+// todo: make sqrt for matrices
 
+math.import({
+	diagonal: function(array){
+		array = array._data;
+		var result = [];
+		for(var i = 0; i < array.length; i++){
+			result[i] = Array(array.length+1).join(0).split('').map(function(a){ return 0; });
+			result[i][i] = array[i];
+		}
+		return math.matrix(result);
+	},
+
+	commutator: function(a, b){
+		return math.subtract( math.multiply(a, b), math.multiply(b, a) );
+	},
+
+	col: function(matrix, num, col){
+		if(parseInt(num) != num)
+			throw "Wrong column!";
+
+		if(num < 1 || num > matrix._data[0].length)
+			throw "Matrix hasn't this column";
+
+		// counting from 1
+		num--;
+
+		if(!col){
+			// return the col
+			var column = [];
+			for(var i = 0; i < matrix._data.length; i++){
+				column[i] = matrix._data[i][num];
+			}
+			return math.matrix(column);
+		}
+		else {
+			// clone the matrix
+			matrix = math.matrix(matrix._data);
+			for(var i = 0; i < col._data.length; i++){
+				matrix._data[i][num] = col._data[i];
+			}
+			return matrix;
+		}
+	}
+});
 
 // Fraction
 math.extend('Fraction', {
@@ -269,11 +314,11 @@ math.class('Polynom', {
 
 		// constant
 		if(arg.c.length == 1)
-			return arg.c[0];
+			return math.matrix(arg.c[0]);
 
 		// linear
 		if(arg.c.length == 2)
-			return math.divide(math.multiply(arg.c[0], -1), arg.c[1]);
+			return math.matrix(math.divide(math.multiply(arg.c[0], -1), arg.c[1]));
 
 		// quadratic
 		if(arg.c.length == 3){
@@ -283,7 +328,7 @@ math.class('Polynom', {
 				D = math.subtract(math.pow(b, 2), math.multiply(4, math.multiply(a, c))),
 				one = math.divide( math.add(math.multiply(b, -1), math.sqrt(D)) , math.multiply(2, a) ),
 				two = math.divide( math.subtract(math.multiply(b, -1), math.sqrt(D)) , math.multiply(2, a) );
-			return math.eval('[' + one + ', ' + two + ']'); //return one + '; ' + two;
+			return math.matrix(one, two); //return one + '; ' + two;
 		}
 
 		// 4,2,0 => ax^4 + bx^2 + c => a,0,b,0,c
