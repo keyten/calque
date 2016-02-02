@@ -22,12 +22,14 @@ math.class = function(name, object){
 		}
 	});
 
+	// short constructor
 	var make = {};
 	make[ name.toLowerCase() ] = function(){
 		return new math.type[name](arguments);
 	};
 	math.import(make);
 
+	// imports
 	var fns = {};
 	if(object.import){
 		object.import.forEach(function(fn){
@@ -35,6 +37,21 @@ math.class = function(name, object){
 		});
 		math.extend(name, fns);
 	}
+
+	// operators
+	['add', 'subtract', 'multiply', 'divide', 'equal'].forEach(function(operator){
+		if(!object[operator])
+			return;
+
+		math.import({
+			name: operator,
+			factory: function(type, config, load, typed){
+				var obj = {};
+				obj[name + ', ' + name] = object[operator];
+				return typed(operator, obj);
+			}
+		});
+	});
 };
 
 math.extend = function(name, object){
@@ -181,8 +198,45 @@ math.class('Color', {
 			this.b = 0;
 	},
 
+	equal: function(a, b){
+		return a.r == b.r && a.g == b.g && a.b == b.b;
+	},
+
+	add: function(a, b){
+		return math.blend('add', a, b);
+	},
+
+	blend: function(mode, a, b){
+		var r1 = a.r, g1 = a.g, b1 = a.b,
+			r2 = b.r, g2 = b.g, b2 = b.b,
+			r, g, b;
+		switch(mode){
+			case 'add': {
+				r = r1 + r2;
+				g = g1 + g2;
+				b = b1 + b2;
+			} break;
+			case 'subtract': {
+				r = r1 - r2;
+				g = g1 - g2;
+				b = b1 - b2;
+			} break;
+			case 'multiply': {
+				r = r1 * r2;
+				g = g1 * g2;
+				b = b1 * b2;
+			} break;
+			default: {
+				throw "Unknown blend mode";
+			}
+		}
+		return math.color([r, g, b]);
+	},
+
+	import: ['blend'],
+
 	clone: function(){
-		return new math.type.Color(this.r, this.g, this.b);
+		return math.color([this.r, this.g, this.b]);
 	},
 
 	toString: function(){
@@ -190,60 +244,6 @@ math.class('Color', {
 	}
 });
 
-math.import({
-	name: 'add',
-	factory: function(type, config, load, typed){
-		return typed('add', {
-			'Color, Color': function(a, b){
-				return math.blend('add', a, b);
-			}
-		});
-	}
-});
-
-math.import({
-	name: 'subtract',
-	factory: function(type, config, load, typed){
-		return typed('subtract', {
-			'Color, Color': function(a, b){
-				return math.blend('subtract', a, b);
-			}
-		});
-	}
-});
-
-math.import({
-	name: 'multiply',
-	factory: function(type, config, load, typed){
-		return typed('multiply', {
-			'Color, Color': function(a, b){
-				return math.blend('multiply', a, b);
-			}
-		});
-	}
-});
-
-math.import({
-	name: 'divide',
-	factory: function(type, config, load, typed){
-		return typed('divide', {
-			'Color, Color': function(a, b){
-				return math.blend('divide', a, b);
-			}
-		});
-	}
-});
-
-math.import({
-	name: 'equal',
-	factory: function(type, config, load, typed){
-		return typed('equal', {
-			'Color, Color': function(a, b){
-				return true;
-			}
-		});
-	}
-});
 
 // Numbers
 math.import({
@@ -253,7 +253,7 @@ math.import({
 			case 'pi': {
 				// Ramanujan's formula
 				if(n == null)
-					n = 1;
+					n = 3;
 				var sum = 0;
 				for(var k = 0; k < n; k++){
 					sum += (math.factorial(4*k) * (1103 + 26390 * k))/(Math.pow(math.factorial(k), 4) * Math.pow(396, 4*k));
@@ -302,6 +302,14 @@ math.import({
 math.class('Polynom', {
 	init: function(args){
 		this.c = args;
+	},
+
+	add: function(a, b){
+		var c = [];
+		for(var i = 0, l = Math.max(a.c.length, b.c.length); i < l; i++){
+			c.push( (a.c[i] || 0) + (b.c[i] || 0) );
+		}
+		return new math.type.Polynom(c);
 	},
 
 	clone: function(){
@@ -404,14 +412,6 @@ math.import({
 			inverted = function(a, b){ return math.add(b, a); };
 
 		return typed('add', {
-			'Polynom, Polynom': function(a, b){
-				var c = [];
-				for(var i = 0, l = Math.max(a.c.length, b.c.length); i < l; i++){
-					c.push( (a.c[i] || 0) + (b.c[i] || 0) );
-				}
-				return new math.type.Polynom(c);
-			},
-
 			'Polynom, number': polynumber,
 			'Polynom, BigNumber': polynumber,
 			'Polynom, Complex': polynumber,
@@ -547,3 +547,67 @@ math.import({
 		return 'Success';
 	}
 });
+
+
+// Quaternion
+math.class('Quaternion', {
+	init: function(args){
+		this.re = args[0];
+		this.i = args[1];
+		this.j = args[2];
+		this.k = args[3];
+	},
+
+	equal: function(a, b){
+		return a.re == b.re && a.i == b.i && a.j == b.j && a.k == b.k;
+	},
+
+	add: function(a, b){
+		return math.quaternion(a.re + b.re, a.i + b.i, a.j + b.j, a.k + b.k);
+	},
+
+	sin: function(a, b){
+		// use the Taylor series?
+	},
+
+	clone: function(){
+		return math.quaternion([this.re, this.i, this.j, this.k]);
+	},
+
+	toString: function(){
+		function cf(coef, power){
+			var xp = 'x<em class="power">' + power + '</em>';
+
+			if(coef == 0)
+				return '';
+
+			if(power == 0)
+				xp = '';
+			else if(coef == 1)
+				coef = '';
+			else if(coef == -1)
+				coef = '-';
+
+			if(power == 1)
+				xp = 'x';
+
+			return coef + xp; //str.push(coef + xp);
+		}
+
+//		return this.re + ' + ' + this.i + 'i + ' + this.j + 'j + ' + this.k + 'k';
+	}
+});
+
+/*
+
+	Quaternions:
+		a, vec u{b, c, d}.
+		isInteger: 2a, 2b, 2c, 2d is int and одинаковой чётности;
+		sgn(q): q / abs(q);
+		arg(q): arccos(a / abs(q))
+		exp(q): exp(a) * (cos(abs(u)) + sin(abs(u)) * u`);
+		ln(q): ln |q| + arg(q) * u` // u` is u / abs(u) ?
+		sin(q): sin a * ch |u| + cos a sh |u| u`
+		cos(q): cos a * ch |u| - sin a sh |u| u`
+
+ */
